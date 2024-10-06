@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Grid App</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--primary-color);
+        }
+
+        .category {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .category h2 {
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 1rem;
+        }
+
+        .button-wrapper {
+            position: relative;
+        }
+
+        .button {
+            display: block;
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.3s;
+            word-break: break-word;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .action-buttons {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .remove-button, .edit-button {
+            background-color: var(--danger-color);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+
+        .edit-button {
+            background-color: var(--secondary-color);
+        }
+
+        .remove-button:hover {
+            background-color: #bd2130;
+        }
+
+        .edit-button:hover {
+            background-color: #545b62;
+        }
+
+        .add-button-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .add-button-form input {
+            flex: 1 1 200px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .add-button-form button {
+            flex: 0 0 auto;
+            background-color: var(--success-color);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .add-button-form button:hover {
+            background-color: #218838;
+        }
+
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Category Grid App</h1>
+        <div id="categories"></div>
+    </div>
+
+    <script>
+        const categories = [
+            'News',
+            'Environment',
+            'Opportunity',
+            'Others'
+        ];
+
+        function createCategorySection(category) {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'category';
+            categoryDiv.innerHTML = `
+                <h2>${category}</h2>
+                <div class="grid" id="${category}-grid"></div>
+                <form class="add-button-form" onsubmit="addButton('${category}', event)">
+                    <input type="text" placeholder="Button Label" required>
+                    <input type="url" placeholder="Button URL" required>
+                    <button type="submit">Add Button</button>
+                </form>
+            `;
+            return categoryDiv;
+        }
+
+        function createButton(category, label, url, id) {
+            const buttonWrapper = document.createElement('div');
+            buttonWrapper.className = 'button-wrapper';
+            buttonWrapper.dataset.id = id;
+
+            const button = document.createElement('a');
+            button.className = 'button';
+            button.href = url;
+            button.target = '_blank';
+            button.textContent = label;
+
+            const actionButtons = document.createElement('div');
+            actionButtons.className = 'action-buttons';
+
+            const removeButton = document.createElement('button');
+            removeButton.className = 'remove-button';
+            removeButton.innerHTML = '&times;';
+            removeButton.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                removeButtonHandler(category, id);
+            };
+
+            const editButton = document.createElement('button');
+            editButton.className = 'edit-button';
+            editButton.innerHTML = '&#9998;';
+            editButton.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editButtonHandler(category, id, label, url);
+            };
+
+            actionButtons.appendChild(editButton);
+            actionButtons.appendChild(removeButton);
+
+            buttonWrapper.appendChild(button);
+            buttonWrapper.appendChild(actionButtons);
+            return buttonWrapper;
+        }
+
+        function addButton(category, event) {
+            event.preventDefault();
+            const form = event.target;
+            const label = form.elements[0].value.trim();
+            const url = form.elements[1].value.trim();
+            
+            if (label && url) {
+                const id = Date.now().toString();
+                const button = createButton(category, label, url, id);
+                document.getElementById(`${category}-grid`).appendChild(button);
+                
+                saveButton(category, label, url, id);
+                form.reset();
+            }
+        }
+
+        function removeButtonHandler(category, id) {
+            let buttons = JSON.parse(localStorage.getItem(category) || '[]');
+            buttons = buttons.filter(b => b.id !== id);
+            localStorage.setItem(category, JSON.stringify(buttons));
+            
+            loadButtons(category);
+        }
+
+        function editButtonHandler(category, id, currentLabel, currentUrl) {
+            const newLabel = prompt("Enter new label:", currentLabel);
+            const newUrl = prompt("Enter new URL:", currentUrl);
+
+            if (newLabel && newUrl) {
+                let buttons = JSON.parse(localStorage.getItem(category) || '[]');
+                const index = buttons.findIndex(b => b.id === id);
+                if (index !== -1) {
+                    buttons[index] = { ...buttons[index], label: newLabel, url: newUrl };
+                    localStorage.setItem(category, JSON.stringify(buttons));
+                    loadButtons(category);
+                }
+            }
+        }
+
+        function saveButton(category, label, url, id) {
+            let buttons = JSON.parse(localStorage.getItem(category) || '[]');
+            buttons.push({ id, label, url });
+            localStorage.setItem(category, JSON.stringify(buttons));
+        }
+
+        function loadButtons(category) {
+            const grid = document.getElementById(`${category}-grid`);
+            grid.innerHTML = '';
+            const buttons = JSON.parse(localStorage.getItem(category) || '[]');
+            buttons.forEach(button => {
+                grid.appendChild(createButton(category, button.label, button.url, button.id));
+            });
+        }
+
+        function initApp() {
+            const categoriesContainer = document.getElementById('categories');
+            categories.forEach(category => {
+                categoriesContainer.appendChild(createCategorySection(category));
+                loadButtons(category);
+            });
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
